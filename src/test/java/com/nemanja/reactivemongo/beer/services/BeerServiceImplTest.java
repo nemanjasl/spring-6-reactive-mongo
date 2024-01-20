@@ -25,12 +25,10 @@ class BeerServiceImplTest {
 
     @Autowired
     BeerService beerService;
-
-    @Autowired
-    BeerMapper beerMapper;
-
     @Autowired
     BeerRepository beerRepository;
+    @Autowired
+    BeerMapper beerMapper;
 
     BeerDto beerDto;
 
@@ -41,33 +39,40 @@ class BeerServiceImplTest {
 
     @Test
     void testFindByBeerStyle() {
-        AtomicBoolean atomicBoolean = new AtomicBoolean(false);
+        AtomicReference<BeerDto> atomicDto = new AtomicReference<>();
 
         BeerDto newBeerDto = getSavedBeerDto();
 
         beerService.findByBeerStyle(newBeerDto.getBeerStyle())
                 .subscribe(dto -> {
                     System.out.println(dto);
-                    atomicBoolean.set(true);
+                    atomicDto.set(dto);
                 });
 
-        await().untilTrue(atomicBoolean);
+        await().until(() -> atomicDto.get() != null);
+
+        BeerDto dto = atomicDto.get();
+        assertThat(dto).isNotNull();
+        assertThat(dto.getBeerStyle()).isEqualTo(dto.getBeerStyle());
     }
 
     @Test
     void testFindFirstByBeerName() {
-        AtomicBoolean atomicBoolean = new AtomicBoolean(false);
+        AtomicReference<BeerDto> atomicDto = new AtomicReference<>();
 
         BeerDto newBeerDto = getSavedBeerDto();
 
-        Mono<BeerDto> founDto = beerService.findFirstByBeerName(newBeerDto.getBeerName());
+        beerService.findFirstByBeerName(newBeerDto.getBeerName())
+            .subscribe(dto -> {
+                System.out.println(dto);
+                atomicDto.set(dto);
+            });
 
-        founDto.subscribe(dto -> {
-            System.out.println(dto);
-            atomicBoolean.set(true);
-        });
+        await().until(() -> atomicDto.get() != null);
 
-        await().untilTrue(atomicBoolean);
+        BeerDto dto = atomicDto.get();
+        assertThat(dto).isNotNull();
+        assertThat(dto.getBeerName()).isEqualTo(newBeerDto.getBeerName());
     }
 
     @Test
@@ -94,7 +99,9 @@ class BeerServiceImplTest {
     @Test
     @DisplayName("Test Save Beer Using Block")
     void testSaveBeerUseBlock() {
-        BeerDto savedDto = beerService.saveBeer(Mono.just(getTestBeerDto())).block();
+        BeerDto savedDto = beerService.saveBeer(
+                Mono.just(beerMapper.beerToBeerDto(TestUtil.getTestBeer()))
+        ).block();
         assertThat(savedDto).isNotNull();
         assertThat(savedDto.getId()).isNotNull();
     }
@@ -108,7 +115,9 @@ class BeerServiceImplTest {
 
         BeerDto updatedDto = beerService.saveBeer(Mono.just(savedBeerDto)).block();
 
-        //verify exists in db
+        //verify exists in dbblic CustomerDto getTestCustomerDto() {
+        //        return customerMapper.customerToCustomerDto(TestUtil.getTestCustomer());
+        //    }
         BeerDto fetchedDto = beerService.getById(updatedDto.getId()).block();
         assertThat(fetchedDto.getBeerName()).isEqualTo(newName);
     }
@@ -120,7 +129,7 @@ class BeerServiceImplTest {
 
         AtomicReference<BeerDto> atomicDto = new AtomicReference<>();
 
-        beerService.saveBeer(Mono.just(getTestBeerDto()))
+        beerService.saveBeer(Mono.just(beerMapper.beerToBeerDto(TestUtil.getTestBeer())))
                 .map(savedBeerDto -> {
                     savedBeerDto.setBeerName(newName);
                     return savedBeerDto;
@@ -149,10 +158,16 @@ class BeerServiceImplTest {
     }
 
     public BeerDto getSavedBeerDto() {
-        return beerService.saveBeer(Mono.just(getTestBeerDto())).block();
-    }
+        //return beerService.saveBeer(Mono.just(getTestBeerDto())).block();
+        AtomicReference<BeerDto> atomicDto = new AtomicReference<>();
 
-    public static BeerDto getTestBeerDto() {
-        return new BeerMapperImpl().beerToBeerDto(TestUtil.getTestBeer());
+        beerService.saveBeer(Mono.just(beerMapper.beerToBeerDto(TestUtil.getTestBeer())))
+                .subscribe(savedDto -> {
+                    atomicDto.set(savedDto);
+                });
+
+        await().until(() -> atomicDto.get() != null);
+
+        return atomicDto.get();
     }
 }
