@@ -22,7 +22,7 @@ public class TestUtil {
 
     public static Customer getTestCustomer() {
         return Customer.builder()
-                .customerName("Pera")
+                .customerName("Stanislav")
                 .build();
     }
 }

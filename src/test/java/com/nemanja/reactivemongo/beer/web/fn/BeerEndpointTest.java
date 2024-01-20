@@ -190,5 +190,4 @@ class BeerEndpointTest {
         return webTestClient.get().uri(BeerRouterConfig.BEER_PATH)
                 .exchange().returnResult(BeerDto.class).getResponseBody().blockFirst();
     }
-
 }

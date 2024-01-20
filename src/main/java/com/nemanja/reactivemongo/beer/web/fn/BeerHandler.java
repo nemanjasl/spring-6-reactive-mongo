@@ -74,7 +74,7 @@ public class BeerHandler {
                         BeerDto.class);
     }
 
-    public Mono<ServerResponse> listBears(ServerRequest request) {
+    public Mono<ServerResponse> listBeers(ServerRequest request) {
         Flux<BeerDto> flux;
 
         if (request.queryParam("beerStyle").isPresent()) {
